@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Exercise Checker</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>🎥 ตรวจท่าออกกำลังกายด้วย AI</h1>
+
+    <select id="poseSelect">
+      <option value="pushup">Push-Up</option>
+      <option value="squat">Squat</option>
+      <option value="plank">Plank</option>
+    </select>
+
+    <div class="video-container">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <div id="feedback">📡 รอเริ่ม...</div>
+    <button id="startBtn">🚀 เริ่มตรวจ</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
