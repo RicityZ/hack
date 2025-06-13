@@ -1,18 +1,19 @@
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const feedback = document.getElementById('feedback');
-const poseSelect = document.getElementById('poseSelect');
-const startBtn = document.getElementById('startBtn');
+// ✅ app.js - แอปตรวจจับท่า Squat / Push-Up / Plank ด้วย MoveNet
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const feedback = document.getElementById("feedback");
+const poseSelect = document.getElementById("poseSelect");
+const startBtn = document.getElementById("startBtn");
 
 let detector, recording = false, poseLog = [], currentPose = "pushup";
 
-// skeleton connections สำหรับ MoveNet 17 จุด
 const skeletonConnections = [
-  [0, 1], [1, 3], [0, 2], [2, 4],          // head
-  [5, 6], [5, 7], [7, 9], [6, 8], [8, 10], // arms
-  [5, 11], [6, 12], [11, 12],               // torso
-  [11, 13], [13, 15], [12, 14], [14, 16]    // legs
+  [0, 1], [1, 3], [0, 2], [2, 4],
+  [5, 6], [5, 7], [7, 9], [6, 8], [8, 10],
+  [5, 11], [6, 12], [11, 12],
+  [11, 13], [13, 15], [12, 14], [14, 16]
 ];
 
 function isValid(kp) {
@@ -21,10 +22,8 @@ function isValid(kp) {
 
 function drawSkeleton(keypoints) {
   ctx.save();
-  ctx.strokeStyle = 'lime';
+  ctx.strokeStyle = "lime";
   ctx.lineWidth = 4;
-  ctx.lineJoin = "round";
-
   skeletonConnections.forEach(([i, j]) => {
     const kp1 = keypoints[i];
     const kp2 = keypoints[j];
@@ -35,7 +34,6 @@ function drawSkeleton(keypoints) {
       ctx.stroke();
     }
   });
-
   ctx.restore();
 }
 
@@ -46,7 +44,6 @@ function drawKeypoints(keypoints) {
       ctx.arc(kp.x, kp.y, 6, 0, 2 * Math.PI);
       ctx.fillStyle = "red";
       ctx.fill();
-
       ctx.beginPath();
       ctx.arc(kp.x, kp.y, 7, 0, 2 * Math.PI);
       ctx.strokeStyle = "white";
@@ -58,27 +55,20 @@ function drawKeypoints(keypoints) {
 
 async function setupCamera() {
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'user', width: 480, height: 360 },
-    audio: false
+    video: { facingMode: "user", width: 720, height: 540 },
+    audio: false,
   });
   video.srcObject = stream;
-
-  await new Promise(resolve => {
-    video.onloadedmetadata = () => resolve();
-  });
-
+  await new Promise(resolve => video.onloadedmetadata = resolve);
   await video.play();
-
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  console.log("✅ กล้องพร้อม", canvas.width, canvas.height);
 }
 
 async function loadPoseDetector() {
   detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, {
     modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
   });
-  console.log("✅ โหลด MoveNet สำเร็จ");
 }
 
 async function detectPose() {
@@ -87,67 +77,68 @@ async function detectPose() {
 
   if (poses.length > 0) {
     const keypoints = poses[0].keypoints;
-    console.log(`✅ ตรวจเจอ ${keypoints.length} keypoints`);
-
     drawSkeleton(keypoints);
     drawKeypoints(keypoints);
 
-    // ตัวอย่างการบันทึกข้อมูลมุม
     if (recording) {
-      // ตัวอย่าง keypoints ของ MoveNet ใช้ index 5=ไหล่ซ้าย, 6=ไหล่ขวา, 7=ศอกซ้าย, 8=ศอกขวา, 9=ข้อมือซ้าย, 10=ข้อมือขวา, 11=สะโพกซ้าย, 12=สะโพกขวา, 13=เข่าซ้าย, 14=เข่าขวา, 15=ข้อเท้าซ้าย, 16=ข้อเท้าขวา
       const R = {
-        shoulder: keypoints[6],
-        elbow: keypoints[8],
-        wrist: keypoints[10],
-        hip: keypoints[12],
-        knee: keypoints[14],
-        ankle: keypoints[16]
+        shoulder: keypoints[6], elbow: keypoints[8], wrist: keypoints[10],
+        hip: keypoints[12], knee: keypoints[14], ankle: keypoints[16],
+        ear: keypoints[4]
       };
       const L = {
-        shoulder: keypoints[5],
-        elbow: keypoints[7],
-        wrist: keypoints[9],
-        hip: keypoints[11],
-        knee: keypoints[13],
-        ankle: keypoints[15]
+        shoulder: keypoints[5], elbow: keypoints[7], wrist: keypoints[9],
+        hip: keypoints[11], knee: keypoints[13], ankle: keypoints[15],
+        ear: keypoints[3]
       };
 
-      // บันทึกมุม
       const frameData = { second: poseLog.length + 1 };
 
-      if (isValid(R.shoulder) && isValid(R.hip) && isValid(R.ankle)) {
-        frameData.bodyAngle = +getAngle(R.shoulder, R.hip, R.ankle).toFixed(1);
-      } else {
-        frameData.bodyAngle = null;
-      }
+      frameData.bodyAngleR = isValid(R.shoulder) && isValid(R.hip) && isValid(R.ankle)
+        ? +getAngle(R.shoulder, R.hip, R.ankle).toFixed(1) : null;
+      frameData.bodyAngleL = isValid(L.shoulder) && isValid(L.hip) && isValid(L.ankle)
+        ? +getAngle(L.shoulder, L.hip, L.ankle).toFixed(1) : null;
 
       if (currentPose === "pushup") {
-        if (isValid(R.shoulder) && isValid(R.elbow) && isValid(R.wrist)) {
-          frameData.elbowAngle = +getAngle(R.shoulder, R.elbow, R.wrist).toFixed(1);
-          frameData.armSpread = +Math.abs(R.elbow.x - R.shoulder.x).toFixed(1);
-        } else {
-          frameData.elbowAngle = null;
-          frameData.armSpread = null;
-        }
+        frameData.elbowAngleR = isValid(R.shoulder) && isValid(R.elbow) && isValid(R.wrist)
+          ? +getAngle(R.shoulder, R.elbow, R.wrist).toFixed(1) : null;
+        frameData.armSpreadR = isValid(R.elbow) && isValid(R.shoulder)
+          ? +Math.abs(R.elbow.x - R.shoulder.x).toFixed(1) : null;
+
+        frameData.elbowAngleL = isValid(L.shoulder) && isValid(L.elbow) && isValid(L.wrist)
+          ? +getAngle(L.shoulder, L.elbow, L.wrist).toFixed(1) : null;
+        frameData.armSpreadL = isValid(L.elbow) && isValid(L.shoulder)
+          ? +Math.abs(L.elbow.x - L.shoulder.x).toFixed(1) : null;
       }
 
       if (currentPose === "squat") {
-        if (isValid(R.hip) && isValid(R.knee) && isValid(R.ankle)) {
-          frameData.kneeAngle = +getAngle(R.hip, R.knee, R.ankle).toFixed(1);
-        } else {
-          frameData.kneeAngle = null;
-        }
-        if (isValid(R.ankle) && isValid(L.ankle)) {
-          frameData.legSpread = +getDistance(R.ankle, L.ankle).toFixed(1);
-        } else {
-          frameData.legSpread = null;
-        }
+        frameData.kneeAngleR = isValid(R.hip) && isValid(R.knee) && isValid(R.ankle)
+          ? +getAngle(R.hip, R.knee, R.ankle).toFixed(1) : null;
+        frameData.kneeAngleL = isValid(L.hip) && isValid(L.knee) && isValid(L.ankle)
+          ? +getAngle(L.hip, L.knee, L.ankle).toFixed(1) : null;
+
+        frameData.ankleSpread = isValid(R.ankle) && isValid(L.ankle)
+          ? +getDistance(R.ankle, L.ankle).toFixed(1) : null;
+        frameData.kneeSpread = isValid(R.knee) && isValid(L.knee)
+          ? +getDistance(R.knee, L.knee).toFixed(1) : null;
+        frameData.shoulderWidth = isValid(R.shoulder) && isValid(L.shoulder)
+          ? +getDistance(R.shoulder, L.shoulder).toFixed(1) : null;
+      }
+
+      if (currentPose === "plank") {
+        frameData.neckAngleR = isValid(R.ear) && isValid(R.shoulder) && isValid(R.hip)
+          ? +getAngle(R.ear, R.shoulder, R.hip).toFixed(1) : null;
+        frameData.neckAngleL = isValid(L.ear) && isValid(L.shoulder) && isValid(L.hip)
+          ? +getAngle(L.ear, L.shoulder, L.hip).toFixed(1) : null;
+
+        frameData.shoulderElbowXDiffR = isValid(R.shoulder) && isValid(R.elbow)
+          ? +Math.abs(R.shoulder.x - R.elbow.x).toFixed(1) : null;
+        frameData.shoulderElbowXDiffL = isValid(L.shoulder) && isValid(L.elbow)
+          ? +Math.abs(L.shoulder.x - L.elbow.x).toFixed(1) : null;
       }
 
       poseLog.push(frameData);
     }
-  } else {
-    console.warn("❌ ไม่เจอคนในกล้อง");
   }
 
   requestAnimationFrame(detectPose);
@@ -167,22 +158,19 @@ startBtn.addEventListener("click", async () => {
 
   feedback.textContent = "✅ เริ่มตรวจจับ...";
   recording = true;
-  let counter = 0;
 
+  let counter = 0;
   const interval = setInterval(async () => {
     counter++;
     if (counter >= 10) {
       clearInterval(interval);
       recording = false;
-      feedback.textContent = "📤 กำลังส่งข้อมูลไปยัง AI...";
+      feedback.textContent = "📤 ส่งข้อมูลไปยัง AI...";
 
       const res = await fetch("/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pose: currentPose,
-          angles: poseLog
-        })
+        body: JSON.stringify({ pose: currentPose, angles: poseLog })
       });
 
       const data = await res.json();
@@ -198,36 +186,11 @@ function getAngle(A, B, C) {
   const dot = AB[0] * CB[0] + AB[1] * CB[1];
   const magAB = Math.hypot(...AB);
   const magCB = Math.hypot(...CB);
-  const angle = Math.acos(dot / (magAB * magCB));
-  return angle * (180 / Math.PI);
+  return Math.acos(dot / (magAB * magCB)) * (180 / Math.PI);
 }
 
 function getDistance(p1, p2) {
   return Math.hypot(p1.x - p2.x, p1.y - p2.y);
-}
-
-async function setupCamera() {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'user', width: 480, height: 360 },
-    audio: false
-  });
-  video.srcObject = stream;
-
-  await new Promise(resolve => {
-    video.onloadedmetadata = () => resolve();
-  });
-
-  await video.play();
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  console.log("✅ กล้องพร้อม", canvas.width, canvas.height);
-}
-
-async function loadPoseDetector() {
-  detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, {
-    modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
-  });
-  console.log("✅ โหลด MoveNet สำเร็จ");
 }
 
 async function start() {
