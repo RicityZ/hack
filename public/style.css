@@ -142,10 +142,17 @@ button:disabled {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   color: #666666;
 }
-
+.video-container-with-feedback {
+  display: flex;
+  align-items: flex-start;
+ gap: 24px;
+  margin-top: 16px;
+}
 .video-container {
   position: relative;
   width: 100%;
+   flex: 2; /* เพิ่มขนาดวิดีโอ */
+    max-width: 720px;
   aspect-ratio: 9 / 16;
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   border-radius: 20px;
@@ -303,7 +310,7 @@ body::before {
 
 .container {
   padding: 20px;
-  max-width: 480px;
+  max-width: 800px; 
   margin: auto;
   position: relative;
   z-index: 1;
@@ -507,6 +514,15 @@ canvas {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
   animation: subtleShimmer 3s infinite;
 }
+#realtimeBox {
+  width: 240px;
+  background: #222;
+  color: #fff;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  line-height: 1.5;
+}
 
 @keyframes subtleShimmer {
   0% { left: -100%; }
@@ -577,7 +593,16 @@ canvas {
   border-color: rgba(255, 152, 0, 0.4);
   color: #ffcc02;
 }
-
+#scoreDetail {
+  background: rgba(0, 0, 0, 0.6); /* พื้นหลังโปร่งสีดำ */
+  color: #ffffff;                /* สีตัวอักษร */
+  padding: 12px;
+  border-radius: 12px;
+  white-space: pre-wrap;        /* ให้ขึ้นบรรทัดอัตโนมัติ */
+  font-size: 15px;
+  line-height: 1.6;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
 /* Mobile optimizations */
 @media (max-width: 480px) {
   .container {

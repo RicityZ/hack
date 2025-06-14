@@ -12,15 +12,26 @@
     <h1>🎥 ตรวจท่าออกกำลังกายด้วย AI</h1>
 
     <select id="poseSelect">
-      <option value="pushup">Push-Up</option>
       <option value="squat">Squat</option>
+      <option value="pushup">Push-Up</option>
       <option value="plank">Plank</option>
     </select>
-
+<h2
+>
+<input type="input" id="weight" placeholder="น้ำหนัก (กก.)" />
+<input type="input" id="height" placeholder="ส่วนสูง (ซม.)" />
+</h2>
     <div class="video-container">
       <video id="video" autoplay muted playsinline></video>
       <canvas id="canvas"></canvas>
     </div>
+<!-- ✅ กล่องแสดงคะแนน -->
+<div id="scoreBox" style="display:none; margin-top: 16px;">
+  <div id="scoreSummary" style="font-weight: bold; font-size: 20px;"></div>
+  <button id="detailToggle" style="margin-top: 6px;">ดูรายละเอียด</button>
+ <pre id="scoreDetail" style="display:none; background: rgba(0,0,0,0.6); color: #fff; padding: 12px; border-radius: 12px; white-space: pre-wrap;"></pre>
+
+</div>
 
     <div id="feedback">📡 รอเริ่ม...</div>
     <button id="startBtn">🚀 เริ่มตรวจ</button>
